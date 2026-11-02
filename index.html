@@ -68,7 +68,13 @@ function setView(v){state.view=v;navActive(v);if(v==="progress"){stats();progres
 function stats(){learnedStat.textContent=state.learned.size;savedStat.textContent=state.saved.size;streakStat.textContent=calcStreak()}
 function calcStreak(){let ds=[...new Set(state.days)].sort().reverse();if(!ds.length)return 0;let today=new Date().toLocaleDateString("en-CA"),yesterday=new Date(Date.now()-86400000).toLocaleDateString("en-CA");if(ds[0]!==today&&ds[0]!==yesterday)return 0;let n=0,d=new Date(ds[0]+"T00:00:00");for(const x of ds){if(x===d.toLocaleDateString("en-CA")){n++;d.setDate(d.getDate()-1)}else break}return n}
 document.querySelectorAll(".navbtn").forEach(b=>b.onclick=()=>setView(b.dataset.view));searchToggle.onclick=()=>{searchWrap.style.display=searchWrap.style.display==="none"?"":"none";if(searchWrap.style.display!=="none")searchInput.focus()};searchInput.oninput=e=>{state.query=e.target.value;render()};progressToggle.onclick=()=>{stats();progressOverlay.classList.add("show")};closeProgress.onclick=()=>progressOverlay.classList.remove("show");
-briefBtn.onclick=()=>{const ids=[1,2,4,5,9];openReader(ids.find(id=>!state.learned.has(id))||ids[0])};
+briefBtn.onclick=()=>{if(dailyInsight){openReader(dailyInsight.id);return;}const ids=[1,2,4,5,9];openReader(ids.find(id=>!state.learned.has(id))||ids[0])};
 const reflectionKey="ms_reflection_"+new Date().toLocaleDateString("en-CA");reflectionInput.value=localStorage.getItem(reflectionKey)||"";reflectionSave.onclick=()=>{localStorage.setItem(reflectionKey,reflectionInput.value);reflectionStatus.textContent="Saved on this device."};
-render();stats();
+render();stats();\n
+let dailyInsight=null;
+fetch("./daily.json?cache="+Date.now(),{cache:"no-store"})
+  .then(r=>{if(!r.ok)throw new Error("Daily feed not available");return r.json()})
+  .then(item=>{dailyInsight=item;item.id=Number(item.id)||10000; if(!stash.some(s=>s.id===item.id)){stash.unshift(item);render();}})
+  .catch(()=>{});
+
 </script></body></html>
